@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ゴミ出しスケジュール＆メモ</title>
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-hover: #047857;
+      --bg: #f0fdf4;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #cbd5e1;
+      --accent-orange: #d97706;
+      --accent-red: #dc2626;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 1.3rem;
+      text-align: center;
+      margin-bottom: 15px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #a7f3d0;
+      padding-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 50px;
+      font-family: inherit;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .checkbox-label {
+      font-size: 0.85rem;
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    button.submit-btn {
+      width: 100%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 5px;
+      transition: background-color 0.2s;
+    }
+    button.submit-btn:hover { background-color: var(--primary-hover); }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .item-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .trash-title {
+      font-weight: bold;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    .next-date-badge {
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #e0f2fe;
+      color: #0369a1;
+      display: inline-block;
+    }
+    .next-date-badge.today {
+      background: #fef3c7;
+      color: var(--accent-orange);
+      border: 1px solid #fde68a;
+    }
+    .next-date-badge.urgent {
+      background: #fee2e2;
+      color: var(--accent-red);
+      border: 1px solid #fca5a5;
+    }
+    .rule-info {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    .memo-info {
+      font-size: 0.8rem;
+      color: #334155;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 6px 8px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .action-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      border-top: 1px dashed #e2e8f0;
+      padding-top: 4px;
+    }
+    .check-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .check-btn.done {
+      background: #94a3b8;
+    }
+    .del-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .cal-img-preview {
+      width: 100%;
+      max-height: 250px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .modal img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .link-card {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .link-card h3 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .link-card ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗑️ ゴミ出しスケジュール＆メモ</h1>
+
+  <!-- カレンダー写真保存エリア -->
+  <div class="card">
+    <div class="card-title">
+      <span>📅 ごみ収集カレンダー画像</span>
+      <div style="display: flex; gap: 4px;">
+        <button type="button" id="deleteCalBtn" onclick="deleteCalPhoto()" style="display:none; width: auto; padding: 3px 8px; font-size: 0.75rem; background:var(--accent-red); color:white; border:none; border-radius:4px; cursor:pointer;">画像を削除</button>
+        <button type="button" id="toggleCalBtn" style="width: auto; padding: 3px 8px; font-size: 0.75rem; background:#64748b; color:white; border:none; border-radius:4px; cursor:pointer;">変更・登録</button>
+      </div>
+    </div>
+    <div id="calUploadForm" style="display: none; margin-bottom: 10px;">
+      <div class="form-group">
+        <label for="calPhoto">ごみカレンダーの写真を登録（自動縮小保存）</label>
+        <input type="file" id="calPhoto" accept="image/*">
+      </div>
+    </div>
+    <div id="calImgContainer">
+      <p id="noCalText" style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:10px 0;">地域のごみカレンダー写真を登録しておくと、いつでも拡大確認できます。</p>
+      <img id="calImg" class="cal-img-preview" style="display:none;" alt="ごみカレンダー" onclick="openModal()">
+    </div>
+  </div>
+
+  <!-- 新規ゴミ登録フォーム -->
+  <div class="card">
+    <div class="card-title">＋ ゴミの分別を追加する</div>
+    <form id="trash-form">
+      <div class="form-group">
+        <label for="trashName">ゴミの種類</label>
+        <input type="text" id="trashName" placeholder="例: 燃やせるゴミ、ペットボトル、不燃ゴミ" required>
+      </div>
+
+      <div class="form-group">
+        <label for="scheduleType">回収パターン</label>
+        <select id="scheduleType" required>
+          <option value="weekly">毎週（例: 毎週 火・金）</option>
+          <option value="monthly">第◯・第△曜日（例: 第1・第3金曜日）</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="weeklyGroup">
+        <label>回収曜日（複数選択可）</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="1">月</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="2">火</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="3">水</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="4">木</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="5">金</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="6">土</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekDay" value="0">日</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="monthlyGroup" style="display:none;">
+        <label>該当する第◯週</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label"><input type="checkbox" class="weekNum" value="1">第1</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekNum" value="2">第2</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekNum" value="3">第3</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekNum" value="4">第4</label>
+          <label class="checkbox-label"><input type="checkbox" class="weekNum" value="5">第5</label>
+        </div>
+        <label for="monthlyDay" style="margin-top:6px;">曜日</label>
+        <select id="monthlyDay">
+          <option value="1">月曜日</option>
+          <option value="2">火曜日</option>
+          <option value="3">水曜日</option>
+          <option value="4">木曜日</option>
+          <option value="5">金曜日</option>
+          <option value="6">土曜日</option>
+          <option value="0">日曜日</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="memo">出し方メモ・注意事項（任意）</label>
+        <textarea id="memo" placeholder="例: 指定袋小サイズ使用、キャップとラベルをはがす"></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">保存する</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">次回ごみ回収スケジュール</div>
+    <ul class="item-list" id="itemList"></ul>
+  </div>
+
+  <div class="link-card">
+    <h3>便利な関連ツール</h3>
+    <ul>
+      <li>👉 <a href="https://konetu.pages.dev/">光熱費管理</a></li>
+      <li>👉 <a href="https://shoumikigen.pages.dev/">賞味期限管理</a></li>
+      <li>👉 <a href="https://kaimono-4nt.pages.dev/">買い物リスト</a></li>
+      <li>👉 <a href="https://poinnto.pages.dev/">ポイ活管理</a></li>
+      <li>👉 <a href="https://souji-aap.pages.dev/">掃除管理</a></li>
+      <li>👉 <a href="https://running-29c.pages.dev/">ランニング記録</a></li>
+      <li>👉 <a href="https://0ff-7cn.pages.dev/">割引計算</a></li>
+    </ul>
+  </div>
+
+  <div id="imgModal" class="modal" onclick="closeModal()">
+    <img id="modalImg" src="" alt="ごみカレンダー拡大">
+  </div>
+
+  <script>
+    const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
+    let trashList = JSON.parse(localStorage.getItem('my_trash_schedules')) || [];
+    let calPhotoData = localStorage.getItem('my_trash_cal_photo') || '';
+
+    function getTodayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    document.getElementById('scheduleType').addEventListener('change', (e) => {
+      const val = e.target.value;
+      document.getElementById('weeklyGroup').style.display = val === 'weekly' ? 'block' : 'none';
+      document.getElementById('monthlyGroup').style.display = val === 'monthly' ? 'block' : 'none';
+    });
+
+    document.getElementById('toggleCalBtn').addEventListener('click', () => {
+      const form = document.getElementById('calUploadForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('calPhoto').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          calPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+          try {
+            localStorage.setItem('my_trash_cal_photo', calPhotoData);
+            displayCalPhoto();
+            document.getElementById('calUploadForm').style.display = 'none';
+          } catch(err) {
+            alert('保存容量を超過しました。');
+          }
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function deleteCalPhoto() {
+      if (confirm('登録したごみ収集カレンダーの写真を削除しますか？')) {
+        localStorage.removeItem('my_trash_cal_photo');
+        calPhotoData = '';
+        displayCalPhoto();
+        document.getElementById('calPhoto').value = '';
+      }
+    }
+
+    function displayCalPhoto() {
+      const imgEl = document.getElementById('calImg');
+      const textEl = document.getElementById('noCalText');
+      const deleteBtn = document.getElementById('deleteCalBtn');
+      
+      if (calPhotoData) {
+        imgEl.src = calPhotoData;
+        imgEl.style.display = 'block';
+        textEl.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'inline-block';
+      } else {
+        imgEl.style.display = 'none';
+        textEl.style.display = 'block';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+      }
+    }
+
+    function openModal() {
+      if (!calPhotoData) return;
+      document.getElementById('modalImg').src = calPhotoData;
+      document.getElementById('imgModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('imgModal').style.display = 'none';
+    }
+
+    function calculateNextDate(item) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (item.type === 'weekly') {
+        let minDiff = 999;
+        let targetDate = null;
+
+        item.days.forEach(dayNum => {
+          const targetDay = parseInt(dayNum);
+          let diff = targetDay - today.getDay();
+          if (diff < 0) diff += 7;
+          if (diff === 0 && item.lastDoneDate === getTodayStr()) {
+            diff = 7;
+          }
+          if (diff < minDiff) {
+            minDiff = diff;
+            targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + diff);
+          }
+        });
+
+        return { date: targetDate, diff: minDiff };
+
+      } else if (item.type === 'monthly') {
+        let checkDate = new Date(today);
+        const targetDay = parseInt(item.monthlyDay);
+        const weekNums = item.weekNums.map(n => parseInt(n));
+
+        for (let i = 0; i < 365; i++) {
+          if (checkDate.getDay() === targetDay) {
+            const dateNum = checkDate.getDate();
+            const nthWeek = Math.ceil(dateNum / 7);
+
+            if (weekNums.includes(nthWeek)) {
+              if (checkDate.getTime() === today.getTime() && item.lastDoneDate === getTodayStr()) {
+                // 本日チェック済み
+              } else {
+                const diffTime = checkDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return { date: new Date(checkDate), diff: diffDays };
+              }
+            }
+          }
+          checkDate.setDate(checkDate.getDate() + 1);
+        }
+      }
+
+      return { date: new Date(), diff: 0 };
+    }
+
+    function render() {
+      const listEl = document.getElementById('itemList');
+      listEl.innerHTML = '';
+
+      if (trashList.length === 0) {
+        listEl.innerHTML = '<li style="text-align:center; color:#94a3b8; padding:20px 0; font-size:0.85rem;">登録されているゴミがありません</li>';
+        return;
+      }
+
+      const processed = trashList.map(item => {
+        const res = calculateNextDate(item);
+        return { ...item, nextDate: res.date, diffDays: res.diff };
+      });
+
+      processed.sort((a, b) => a.diffDays - b.diffDays);
+
+      processed.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'item-card';
+
+        const month = String(item.nextDate.getMonth() + 1).padStart(2, '0');
+        const date = String(item.nextDate.getDate()).padStart(2, '0');
+        const dayName = DAY_NAMES[item.nextDate.getDay()];
+        const dateStr = `${month}/${date}(${dayName})`;
+
+        let badgeText = '';
+        let badgeClass = '';
+
+        if (item.diffDays === 0) {
+          badgeText = `本日 ${dateStr} です！`;
+          badgeClass = 'today';
+        } else if (item.diffDays === 1) {
+          badgeText = `明日 ${dateStr} （あと1日）`;
+          badgeClass = 'urgent';
+        } else {
+          badgeText = `${dateStr} （あと ${item.diffDays} 日）`;
+        }
+
+        let ruleText = '';
+        if (item.type === 'weekly') {
+          const daysStr = item.days.map(d => DAY_NAMES[d]).join('・');
+          ruleText = `毎週 ${daysStr}曜日`;
+        } else if (item.type === 'monthly') {
+          const weeksStr = item.weekNums.map(w => `第${w}`).join('・');
+          ruleText = `${weeksStr} ${DAY_NAMES[item.monthlyDay]}曜日`;
+        }
+
+        const isDoneToday = item.lastDoneDate === getTodayStr();
+        const checkBtnText = isDoneToday ? '✓ ゴミ出し完了済' : 'ゴミ出し済にする';
+        const checkBtnClass = isDoneToday ? 'check-btn done' : 'check-btn';
+
+        li.innerHTML = `
+          <div class="item-header">
+            <div>
+              <div class="trash-title">${escapeHtml(item.name)}</div>
+              <div class="rule-info">🔄 ${ruleText}</div>
+            </div>
+            <span class="next-date-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          ${item.memo ? `<div class="memo-info">📝 ${escapeHtml(item.memo)}</div>` : ''}
+          <div class="action-row">
+            <button class="${checkBtnClass}" onclick="toggleDone(${item.id})">${checkBtnText}</button>
+            <button class="del-btn" onclick="deleteTrash(${item.id})">削除</button>
+          </div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    document.getElementById('trash-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('scheduleType').value;
+      const name = document.getElementById('trashName').value.trim();
+      const memo = document.getElementById('memo').value.trim();
+
+      let days = [];
+      let weekNums = [];
+      let monthlyDay = '1';
+
+      if (type === 'weekly') {
+        document.querySelectorAll('.weekDay:checked').forEach(cb => days.push(cb.value));
+        if (days.length === 0) {
+          alert('曜日を少なくとも1つ選択してください');
+          return;
+        }
+      } else if (type === 'monthly') {
+        document.querySelectorAll('.weekNum:checked').forEach(cb => weekNums.push(cb.value));
+        if (weekNums.length === 0) {
+          alert('第◯週を少なくとも1つ選択してください');
+          return;
+        }
+        monthlyDay = document.getElementById('monthlyDay').value;
+      }
+
+      const newTrash = {
+        id: Date.now(),
+        name,
+        type,
+        days,
+        weekNums,
+        monthlyDay,
+        memo,
+        lastDoneDate: ''
+      };
+
+      trashList.push(newTrash);
+      saveAndRender();
+
+      document.getElementById('trashName').value = '';
+      document.getElementById('memo').value = '';
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    });
+
+    window.toggleDone = function(id) {
+      trashList = trashList.map(item => {
+        if (item.id === id) {
+          const newDone = item.lastDoneDate === getTodayStr() ? '' : getTodayStr();
+          return { ...item, lastDoneDate: newDone };
+        }
+        return item;
+      });
+      saveAndRender();
+    };
+
+    window.deleteTrash = function(id) {
+      if (confirm('このゴミの分別を削除しますか？')) {
+        trashList = trashList.filter(item => item.id !== id);
+        saveAndRender();
+      }
+    };
+
+    function saveAndRender() {
+      localStorage.setItem('my_trash_schedules', JSON.stringify(trashList));
+      render();
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    displayCalPhoto();
+    render();
+  </script>
+</body>
+</html>
